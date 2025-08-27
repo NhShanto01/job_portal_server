@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies?.token;
-    console.log('Token inside the verifyToken:', token);
+    // console.log('Token inside the verifyToken:', token);
 
     if (!token) {
         return res.status(401).send({ message: 'Unauthorized access' });
@@ -53,12 +53,41 @@ async function run() {
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
         // job Collections and apis
+        const userCollection = client.db('jobPortal').collection('users');
+
+        // user related apis
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            //insert email if user doesn't exist => simple checking
+            const query = { email: user.email };
+            const existingUser = await userCollection.findOne(query);
+            if (existingUser) {
+                return res.send({ success: true, insertedId: null });
+            }
+
+            const result = await userCollection.insertOne(user);
+            res.send({ success: true, insertedId: result.insertedId });
+        });
+
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray();
+            res.send(result);
+        });
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const result = await userCollection.deleteOne(query);
+            res.send({ success: true, deletedId: id });
+        });
+
+        // job Collections and apis
         const jobCollection = client.db('jobPortal').collection('jobs');
         
         //jwt token related apis
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '300s' });
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '5m' });
             res
                 .cookie('token', token, {
                     httpOnly: true,
@@ -219,6 +248,7 @@ async function run() {
 
         // blog Collections and apis
         const blogCollection = client.db('jobPortal').collection('blogs');
+
         app.get('/blogs', async (req, res) => {
             const cursor = blogCollection.find();
             const result = await cursor.toArray();
