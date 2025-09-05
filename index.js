@@ -81,6 +81,17 @@ async function run() {
             res.send({ success: true, deletedId: id });
         });
 
+        
+        app.get('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            if (user) {
+                res.send({ success: true, user: user });
+            } else {
+                res.status(404).send({ message: 'User not found' });
+            }
+        });
+
         // job Collections and apis
         const jobCollection = client.db('jobPortal').collection('jobs');
         
@@ -266,6 +277,8 @@ run().catch(console.dir);
 app.get('/', (req, res) => {
     res.send('Job is falling behind');
 });
+
+
 
 app.listen(port, () => {
     console.log(`Server is running on ${port}`);
