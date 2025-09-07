@@ -243,6 +243,7 @@ async function run() {
                 res.status(500).send({ success: false, message: 'Server error' });
             }
         });
+        
         app.patch('/job-application/:id', async (req, res) => {
             const id = req.params.id;
             const data = req.body;
